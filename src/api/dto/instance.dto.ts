@@ -19,6 +19,7 @@ export class InstanceDto extends IntegrationDto {
   rejectCall?: boolean;
   msgCall?: string;
   groupsIgnore?: boolean;
+  newslettersIgnore?: boolean;
   alwaysOnline?: boolean;
   readMessages?: boolean;
   readStatus?: boolean;

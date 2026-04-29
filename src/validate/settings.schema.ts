@@ -27,6 +27,7 @@ export const settingsSchema: JSONSchema7 = {
     rejectCall: { type: 'boolean' },
     msgCall: { type: 'string' },
     groupsIgnore: { type: 'boolean' },
+    newslettersIgnore: { type: 'boolean', default: true },
     alwaysOnline: { type: 'boolean' },
     readMessages: { type: 'boolean' },
     readStatus: { type: 'boolean' },

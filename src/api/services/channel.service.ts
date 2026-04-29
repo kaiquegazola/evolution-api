@@ -149,6 +149,7 @@ export class ChannelStartupService {
     this.localSettings.rejectCall = data?.rejectCall;
     this.localSettings.msgCall = data?.msgCall;
     this.localSettings.groupsIgnore = data?.groupsIgnore;
+    this.localSettings.newslettersIgnore = data?.newslettersIgnore;
     this.localSettings.alwaysOnline = data?.alwaysOnline;
     this.localSettings.readMessages = data?.readMessages;
     this.localSettings.readStatus = data?.readStatus;
@@ -165,6 +166,7 @@ export class ChannelStartupService {
         rejectCall: data.rejectCall,
         msgCall: data.msgCall,
         groupsIgnore: data.groupsIgnore,
+        newslettersIgnore: data.newslettersIgnore,
         alwaysOnline: data.alwaysOnline,
         readMessages: data.readMessages,
         readStatus: data.readStatus,
@@ -175,6 +177,7 @@ export class ChannelStartupService {
         rejectCall: data.rejectCall,
         msgCall: data.msgCall,
         groupsIgnore: data.groupsIgnore,
+        newslettersIgnore: data.newslettersIgnore,
         alwaysOnline: data.alwaysOnline,
         readMessages: data.readMessages,
         readStatus: data.readStatus,
@@ -187,6 +190,7 @@ export class ChannelStartupService {
     this.localSettings.rejectCall = data?.rejectCall;
     this.localSettings.msgCall = data?.msgCall;
     this.localSettings.groupsIgnore = data?.groupsIgnore;
+    this.localSettings.newslettersIgnore = data?.newslettersIgnore;
     this.localSettings.alwaysOnline = data?.alwaysOnline;
     this.localSettings.readMessages = data?.readMessages;
     this.localSettings.readStatus = data?.readStatus;
@@ -214,6 +218,7 @@ export class ChannelStartupService {
       rejectCall: data.rejectCall,
       msgCall: data.msgCall,
       groupsIgnore: data.groupsIgnore,
+      newslettersIgnore: data.newslettersIgnore,
       alwaysOnline: data.alwaysOnline,
       readMessages: data.readMessages,
       readStatus: data.readStatus,

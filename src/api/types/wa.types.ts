@@ -83,6 +83,7 @@ export declare namespace wa {
     rejectCall?: boolean;
     msgCall?: string;
     groupsIgnore?: boolean;
+    newslettersIgnore?: boolean;
     alwaysOnline?: boolean;
     readMessages?: boolean;
     readStatus?: boolean;

@@ -39,6 +39,7 @@ export const instanceSchema: JSONSchema7 = {
     rejectCall: { type: 'boolean' },
     msgCall: { type: 'string' },
     groupsIgnore: { type: 'boolean' },
+    newslettersIgnore: { type: 'boolean' },
     alwaysOnline: { type: 'boolean' },
     readMessages: { type: 'boolean' },
     readStatus: { type: 'boolean' },

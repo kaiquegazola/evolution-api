@@ -126,6 +126,7 @@ export class InstanceController {
         rejectCall: instanceData.rejectCall === true,
         msgCall: instanceData.msgCall || '',
         groupsIgnore: instanceData.groupsIgnore === true,
+        newslettersIgnore: instanceData.newslettersIgnore !== false,
         alwaysOnline: instanceData.alwaysOnline === true,
         readMessages: instanceData.readMessages === true,
         readStatus: instanceData.readStatus === true,

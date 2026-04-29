@@ -271,6 +271,7 @@ model Setting {
   rejectCall      Boolean   @default(false) @db.Boolean
   msgCall         String?   @db.VarChar(100)
   groupsIgnore    Boolean   @default(false) @db.Boolean
+  newslettersIgnore Boolean   @default(true) @db.Boolean
   alwaysOnline    Boolean   @default(false) @db.Boolean
   readMessages    Boolean   @default(false) @db.Boolean
   readStatus      Boolean   @default(false) @db.Boolean

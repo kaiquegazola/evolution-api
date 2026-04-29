@@ -678,6 +678,7 @@ export class BaileysStartupService extends ChannelStartupService {
     }
 
     this.logger.info(`Group Ignore: ${this.localSettings.groupsIgnore}`);
+    this.logger.info(`Newsletters Ignore: ${this.localSettings.newslettersIgnore}`);
 
     let options;
 
@@ -744,7 +745,7 @@ export class BaileysStartupService extends ChannelStartupService {
 
         const isGroupJid = this.localSettings.groupsIgnore && isJidGroup(jid);
         const isBroadcast = !this.localSettings.readStatus && isJidBroadcast(jid);
-        const isNewsletter = isJidNewsletter(jid);
+        const isNewsletter = this.localSettings.newslettersIgnore && isJidNewsletter(jid);
 
         return isGroupJid || isBroadcast || isNewsletter;
       },
