@@ -5992,23 +5992,32 @@ export class BaileysStartupService extends ChannelStartupService {
     const limit = Number((query as any)?.limit ?? (query as any)?.rows ?? 50);
     const skip = (page - 1) * limit;
 
-    const chats = await this.prismaRepository.chat.findMany({
+    const messages = await this.prismaRepository.message.findMany({
       where: {
         instanceId: this.instanceId,
-        remoteJid: { endsWith: '@newsletter' },
+        AND: [{ key: { path: ['remoteJid'], not: null } }],
       },
-      orderBy: { updatedAt: 'desc' },
-      select: { remoteJid: true, name: true, updatedAt: true },
+      orderBy: { messageTimestamp: 'desc' },
+      select: { key: true, messageTimestamp: true },
     });
 
-    const total = chats.length;
+    const channelMap = new Map<string, { remoteJid: string; lastMessageTimestamp: number }>();
+    for (const msg of messages) {
+      const key = msg.key as any;
+      const remoteJid = key?.remoteJid as string | undefined;
+      if (!remoteJid || !isJidNewsletter(remoteJid)) continue;
+      if (!channelMap.has(remoteJid)) {
+        channelMap.set(remoteJid, { remoteJid, lastMessageTimestamp: msg.messageTimestamp });
+      }
+    }
+
+    const candidates = Array.from(channelMap.values());
+    const enriched = await this.enrichChannelsWithMetadata(candidates);
+    const subscribed = enriched.filter((c: any) => c.role && c.role !== 'GUEST');
+
+    const total = subscribed.length;
     const pages = Math.ceil(total / limit) || 1;
-    const pageSlice = chats.slice(skip, skip + limit).map((c) => ({
-      remoteJid: c.remoteJid,
-      name: c.name ?? undefined,
-      updatedAt: c.updatedAt,
-    }));
-    const records = await this.enrichChannelsWithMetadata(pageSlice);
+    const records = subscribed.slice(skip, skip + limit);
 
     return {
       total,
@@ -6034,16 +6043,25 @@ export class BaileysStartupService extends ChannelStartupService {
   }
 
   private serializeNewsletterMetadata(meta: any) {
+    const t = meta.thread_metadata ?? {};
+    const v = meta.viewer_metadata ?? {};
+    const subscribersRaw = t.subscribers_count ?? meta.subscribers;
+    const creationRaw = t.creation_time ?? meta.creation_time;
+
     return {
       remoteJid: meta.id,
-      name: meta.name,
-      description: meta.description,
-      pictureUrl: meta.picture?.url,
-      subscribers: meta.subscribers,
-      verification: meta.verification,
-      muteState: meta.mute_state,
-      invite: meta.invite,
-      creationTime: meta.creation_time,
+      name: t.name?.text ?? meta.name,
+      description: t.description?.text ?? meta.description,
+      handle: t.handle ?? undefined,
+      pictureId: t.picture?.id ?? meta.picture?.id,
+      pictureDirectPath: t.picture?.direct_path ?? meta.picture?.directPath,
+      previewDirectPath: t.preview?.direct_path,
+      subscribers: subscribersRaw != null ? Number(subscribersRaw) : undefined,
+      verification: t.verification ?? meta.verification,
+      invite: t.invite ?? meta.invite,
+      creationTime: creationRaw != null ? Number(creationRaw) : undefined,
+      muteState: v.mute ?? meta.mute_state,
+      role: v.role,
     };
   }
 }
