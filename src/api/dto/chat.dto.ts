@@ -136,3 +136,7 @@ export class DecryptPollVoteDto {
   };
   remoteJid: string;
 }
+
+export class ChannelJidDto {
+  jid: string;
+}

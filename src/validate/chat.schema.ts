@@ -316,3 +316,13 @@ export const profileSchema: JSONSchema7 = {
     isBusiness: { type: 'boolean' },
   },
 };
+
+export const channelJidSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    jid: { type: 'string', pattern: '^[\\w-]+@newsletter$' },
+  },
+  required: ['jid'],
+  ...isNotEmpty('jid'),
+};

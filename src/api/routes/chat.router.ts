@@ -2,6 +2,7 @@ import { RouterBroker } from '@api/abstract/abstract.router';
 import {
   ArchiveChatDto,
   BlockUserDto,
+  ChannelJidDto,
   DecryptPollVoteDto,
   DeleteMessage,
   getBase64FromMediaMessageDto,
@@ -23,6 +24,7 @@ import { Contact, Message, MessageUpdate } from '@prisma/client';
 import {
   archiveChatSchema,
   blockUserSchema,
+  channelJidSchema,
   contactValidateSchema,
   decryptPollVoteSchema,
   deleteMessageSchema,
@@ -300,6 +302,26 @@ export class ChatRouter extends RouterBroker {
           schema: contactValidateSchema,
           ClassRef: Query<Contact>,
           execute: (instance, query) => chatController.fetchChannels(instance, query as any),
+        });
+
+        return res.status(HttpStatus.OK).json(response);
+      })
+      .post(this.routerPath('findSubscribedChannels'), ...guards, async (req, res) => {
+        const response = await this.dataValidate({
+          request: req,
+          schema: contactValidateSchema,
+          ClassRef: Query<Contact>,
+          execute: (instance, query) => chatController.fetchSubscribedChannels(instance, query as any),
+        });
+
+        return res.status(HttpStatus.OK).json(response);
+      })
+      .post(this.routerPath('findChannelInfo'), ...guards, async (req, res) => {
+        const response = await this.dataValidate<ChannelJidDto>({
+          request: req,
+          schema: channelJidSchema,
+          ClassRef: ChannelJidDto,
+          execute: (instance, data) => chatController.findChannelInfo(instance, data),
         });
 
         return res.status(HttpStatus.OK).json(response);

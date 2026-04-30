@@ -5954,7 +5954,7 @@ export class BaileysStartupService extends ChannelStartupService {
       if (!channelMap.has(remoteJid)) {
         channelMap.set(remoteJid, {
           remoteJid,
-          pushName: undefined, // Push name is never stored for channels, so we set it as undefined
+          pushName: undefined,
           lastMessageTimestamp: msg.messageTimestamp,
         });
       }
@@ -5964,7 +5964,8 @@ export class BaileysStartupService extends ChannelStartupService {
 
     const total = allChannels.length;
     const pages = Math.ceil(total / limit);
-    const records = allChannels.slice(skip, skip + limit);
+    const pageSlice = allChannels.slice(skip, skip + limit);
+    const records = await this.enrichChannelsWithMetadata(pageSlice);
 
     return {
       total,
@@ -5972,6 +5973,77 @@ export class BaileysStartupService extends ChannelStartupService {
       currentPage: page,
       limit,
       records,
+    };
+  }
+
+  public async findChannelInfo({ jid }: { jid: string }) {
+    if (!isJidNewsletter(jid)) {
+      throw new BadRequestException(`Invalid newsletter jid: ${jid}`);
+    }
+
+    const metadata = await this.client.newsletterMetadata('jid', jid);
+    if (!metadata) return null;
+
+    return this.serializeNewsletterMetadata(metadata);
+  }
+
+  public async fetchSubscribedChannels(query: Query<Contact>) {
+    const page = Number((query as any)?.page ?? 1);
+    const limit = Number((query as any)?.limit ?? (query as any)?.rows ?? 50);
+    const skip = (page - 1) * limit;
+
+    const chats = await this.prismaRepository.chat.findMany({
+      where: {
+        instanceId: this.instanceId,
+        remoteJid: { endsWith: '@newsletter' },
+      },
+      orderBy: { updatedAt: 'desc' },
+      select: { remoteJid: true, name: true, updatedAt: true },
+    });
+
+    const total = chats.length;
+    const pages = Math.ceil(total / limit) || 1;
+    const pageSlice = chats.slice(skip, skip + limit).map((c) => ({
+      remoteJid: c.remoteJid,
+      name: c.name ?? undefined,
+      updatedAt: c.updatedAt,
+    }));
+    const records = await this.enrichChannelsWithMetadata(pageSlice);
+
+    return {
+      total,
+      pages,
+      currentPage: page,
+      limit,
+      records,
+    };
+  }
+
+  private async enrichChannelsWithMetadata<T extends { remoteJid: string }>(channels: T[]) {
+    if (!channels.length) return [];
+
+    const results = await Promise.allSettled(channels.map((ch) => this.client.newsletterMetadata('jid', ch.remoteJid)));
+
+    return channels.map((ch, idx) => {
+      const result = results[idx];
+      if (result.status !== 'fulfilled' || !result.value) {
+        return ch;
+      }
+      return { ...ch, ...this.serializeNewsletterMetadata(result.value) };
+    });
+  }
+
+  private serializeNewsletterMetadata(meta: any) {
+    return {
+      remoteJid: meta.id,
+      name: meta.name,
+      description: meta.description,
+      pictureUrl: meta.picture?.url,
+      subscribers: meta.subscribers,
+      verification: meta.verification,
+      muteState: meta.mute_state,
+      invite: meta.invite,
+      creationTime: meta.creation_time,
     };
   }
 }

@@ -1,6 +1,7 @@
 import {
   ArchiveChatDto,
   BlockUserDto,
+  ChannelJidDto,
   DecryptPollVoteDto,
   DeleteMessage,
   getBase64FromMediaMessageDto,
@@ -125,5 +126,13 @@ export class ChatController {
 
   public async fetchChannels({ instanceName }: InstanceDto, query: Query<Contact>) {
     return await this.waMonitor.waInstances[instanceName].fetchChannels(query);
+  }
+
+  public async findChannelInfo({ instanceName }: InstanceDto, data: ChannelJidDto) {
+    return await this.waMonitor.waInstances[instanceName].findChannelInfo(data);
+  }
+
+  public async fetchSubscribedChannels({ instanceName }: InstanceDto, query: Query<Contact>) {
+    return await this.waMonitor.waInstances[instanceName].fetchSubscribedChannels(query);
   }
 }
