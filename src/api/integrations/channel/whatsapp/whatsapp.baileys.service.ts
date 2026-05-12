@@ -2351,12 +2351,37 @@ export class BaileysStartupService extends ChannelStartupService {
 
       const image = previewData.images && previewData.images.length > 0 ? previewData.images[0] : undefined;
 
+      // Pré-baixa thumbnail e embeda como bytes. Sem isso, WA depende de
+      // fetchar `thumbnailUrl` ele mesmo — falha frequente (CDN, https,
+      // size) deixa o card sem imagem. Inline garante render. Limite
+      // ~100KB pra não estourar payload da mensagem; se maior, manda só URL.
+      let thumbnail: Buffer | undefined;
+      if (image) {
+        try {
+          const res = await fetch(image, {
+            headers: { 'user-agent': 'googlebot' },
+            signal: AbortSignal.timeout(5000),
+          });
+          if (res.ok) {
+            const buf = Buffer.from(await res.arrayBuffer());
+            if (buf.byteLength > 0 && buf.byteLength < 100_000) {
+              thumbnail = buf;
+            }
+          }
+        } catch (err) {
+          this.logger.warn(`Failed to pre-fetch thumbnail ${image}: ${err}`);
+        }
+      }
+
       return {
         externalAdReply: {
           title: previewData.title,
           body: previewData.description,
-          mediaType: 2, // 2 for video/image preview, though usually 1 is for thumbnail
+          // 1 = IMAGE, 2 = VIDEO. Antes estava 2 → WA renderizava placeholder
+          // de vídeo (ícone play/broken) ao invés do thumbnail.
+          mediaType: 1,
           thumbnailUrl: image,
+          ...(thumbnail ? { thumbnail } : {}),
           sourceUrl: url,
           mediaUrl: url,
           renderLargerThumbnail: true,
