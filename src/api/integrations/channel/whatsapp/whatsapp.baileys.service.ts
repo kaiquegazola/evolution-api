@@ -2351,37 +2351,16 @@ export class BaileysStartupService extends ChannelStartupService {
 
       const image = previewData.images && previewData.images.length > 0 ? previewData.images[0] : undefined;
 
-      // Pré-baixa thumbnail e embeda como bytes. Sem isso, WA depende de
-      // fetchar `thumbnailUrl` ele mesmo — falha frequente (CDN, https,
-      // size) deixa o card sem imagem. Inline garante render. Limite
-      // ~100KB pra não estourar payload da mensagem; se maior, manda só URL.
-      let thumbnail: Buffer | undefined;
-      if (image) {
-        try {
-          const res = await fetch(image, {
-            headers: { 'user-agent': 'googlebot' },
-            signal: AbortSignal.timeout(5000),
-          });
-          if (res.ok) {
-            const buf = Buffer.from(await res.arrayBuffer());
-            if (buf.byteLength > 0 && buf.byteLength < 100_000) {
-              thumbnail = buf;
-            }
-          }
-        } catch (err) {
-          this.logger.warn(`Failed to pre-fetch thumbnail ${image}: ${err}`);
-        }
-      }
-
       return {
         externalAdReply: {
           title: previewData.title,
           body: previewData.description,
-          // 1 = IMAGE, 2 = VIDEO. Antes estava 2 → WA renderizava placeholder
-          // de vídeo (ícone play/broken) ao invés do thumbnail.
+          // 1 = IMAGE, 2 = VIDEO. Esse helper não está sendo usado no
+          // sendMessageWithTyping atualmente (Baileys auto-preview cuida
+          // do render large com upload pro WA CDN). Mantemos pelo
+          // contrato caso outro callsite invoque externalAdReply.
           mediaType: 1,
           thumbnailUrl: image,
-          ...(thumbnail ? { thumbnail } : {}),
           sourceUrl: url,
           mediaUrl: url,
           renderLargerThumbnail: true,
@@ -2610,19 +2589,13 @@ export class BaileysStartupService extends ChannelStartupService {
         }
       }
 
-      const userWantsPreview = options?.linkPreview !== false;
-
-      let previewContext: any = undefined;
-      if (userWantsPreview && (message as any)?.conversation) {
-        previewContext = await this.generateLinkPreview((message as any).conversation);
-      }
-
-      // Quando geramos externalAdReply manualmente (richer preview com
-      // watermark), Baileys auto-gera UMA SEGUNDA preview do mesmo URL via
-      // link-preview-js interno. Resultado: dois cards no WA (bug).
-      // Setamos linkPreview=false explícito pro Baileys quando já temos
-      // externalAdReply próprio.
-      const linkPreview = previewContext ? false : options?.linkPreview === false ? false : undefined;
+      // externalAdReply manual = sempre small layout no WA (ícone + texto).
+      // Baileys auto-preview (linkPreview=undefined/true) faz upload da
+      // thumbnail pro CDN do WA e renderiza LARGE (imagem grande em cima).
+      // Antes geravamos AMBOS → 2 cards (small placeholder + large real).
+      // Agora deixamos só Baileys auto cuidar → 1 card large com imagem.
+      const previewContext: any = undefined;
+      const linkPreview = options?.linkPreview === false ? false : undefined;
 
       let quoted: WAMessage;
 
