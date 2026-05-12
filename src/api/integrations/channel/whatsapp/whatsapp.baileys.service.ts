@@ -2585,12 +2585,19 @@ export class BaileysStartupService extends ChannelStartupService {
         }
       }
 
-      const linkPreview = options?.linkPreview === false ? false : undefined;
+      const userWantsPreview = options?.linkPreview !== false;
 
       let previewContext: any = undefined;
-      if (linkPreview !== false && (message as any)?.conversation) {
+      if (userWantsPreview && (message as any)?.conversation) {
         previewContext = await this.generateLinkPreview((message as any).conversation);
       }
+
+      // Quando geramos externalAdReply manualmente (richer preview com
+      // watermark), Baileys auto-gera UMA SEGUNDA preview do mesmo URL via
+      // link-preview-js interno. Resultado: dois cards no WA (bug).
+      // Setamos linkPreview=false explícito pro Baileys quando já temos
+      // externalAdReply próprio.
+      const linkPreview = previewContext ? false : options?.linkPreview === false ? false : undefined;
 
       let quoted: WAMessage;
 
